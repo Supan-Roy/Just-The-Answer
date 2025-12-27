@@ -3,10 +3,24 @@
   "name": "Just The Answer",
   "version": "1.0",
   "description": "Copy only the meaningful answer from AI responses — clean and formatted for Word and Google Docs",
-  "permissions": ["clipboardWrite"],
+  "permissions": ["clipboardWrite", "storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Just The Answer"
+  },
   "content_scripts": [
     {
-      "matches": ["https://chatgpt.com/*"],
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://gemini.google.com/*",
+        "https://ai.google.com/*",
+        "https://copilot.microsoft.com/*",
+        "https://chat.deepseek.com/*",
+        "https://*.deepseek.com/*",
+        "https://www.perplexity.ai/*",
+        "https://poe.com/*",
+        "https://huggingface.co/chat/*"
+      ],
       "js": ["content.js"]
     }
   ]

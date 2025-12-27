@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 280px;
+      padding: 16px;
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      color: #1f2937;
+    }
+    
+    h1 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+    }
+    
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .toggle-label {
+      font-weight: 500;
+      color: #374151;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: #d1d5db;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 200ms;
+    }
+    
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: left 200ms;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .toggle-switch.on {
+      background: #10b981;
+    }
+    
+    .toggle-switch.on::after {
+      left: 22px;
+    }
+    
+    .status {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 8px;
+    }
+    
+    .status.enabled {
+      color: #10b981;
+    }
+    
+    .status.disabled {
+      color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <h1>Just The Answer</h1>
+  
+  <div class="toggle-container">
+    <span class="toggle-label">Enable Extension</span>
+    <div class="toggle-switch" id="toggle"></div>
+  </div>
+  
+  <div class="status" id="status">Loading...</div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
