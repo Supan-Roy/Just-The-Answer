@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Just The Answer",
+  "version": "1.0",
+  "description": "Copy only the meaningful answer from AI responses — clean and formatted for Word and Google Docs",
+  "permissions": ["clipboardWrite"],
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
