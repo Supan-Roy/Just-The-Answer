@@ -1,0 +1,50 @@
+<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1f2937;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#111827;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+    </linearGradient>
+    
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Main background -->
+  <rect width="128" height="128" fill="url(#grad1)" rx="20"/>
+  
+  <!-- Central shape: Abstract answer/document symbol -->
+  <g transform="translate(64, 64) scale(1.7)">
+    <!-- Main icon group -->
+    <g filter="url(#glow)">
+      <!-- Top: Arrow/highlight pointing up (representing selection) -->
+      <path d="M -8 -14 L 0 -22 L 8 -14" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      
+      <!-- Middle: Document/answer box with lines -->
+      <rect x="-12" y="-6" width="24" height="20" rx="2" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+      
+      <!-- Text lines inside document -->
+      <line x1="-8" y1="0" x2="4" y2="0" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="-8" y1="5" x2="8" y2="5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="-8" y1="10" x2="6" y2="10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      
+      <!-- Bottom: Copy/clipboard indicator (HIGHLIGHTED in gold) -->
+      <g transform="translate(0, 20)">
+        <path d="M -6 -2 L -6 6 L 6 6 L 6 -2 M -2 -2 L -2 -6 L 4 -6" fill="none" stroke="url(#grad2)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Subtle shine effect -->
+  <rect width="128" height="128" fill="white" opacity="0.08" rx="20" style="pointer-events: none;"/>
+</svg>
+

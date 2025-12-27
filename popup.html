@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <style>
     body {
-      width: 280px;
+      width: 320px;
       padding: 16px;
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
@@ -17,6 +17,36 @@
       font-size: 18px;
       font-weight: 600;
       color: #111827;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .logo {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+    
+    .header-title {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header-title h1 {
+      margin: 0;
+      font-size: 16px;
+    }
+    
+    .header-subtitle {
+      font-size: 11px;
+      color: #6b7280;
+      font-weight: 400;
+      margin-top: 2px;
     }
     
     .toggle-container {
@@ -78,10 +108,154 @@
     .status.disabled {
       color: #ef4444;
     }
+    
+    .about-section {
+      margin-top: 16px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 12px;
+    }
+    
+    .about-toggle {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px;
+      background: #f9fafb;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 13px;
+      color: #374151;
+      user-select: none;
+    }
+    
+    .about-toggle:hover {
+      background: #f3f4f6;
+    }
+    
+    .about-arrow {
+      transition: transform 200ms;
+      font-size: 10px;
+    }
+    
+    .about-arrow.open {
+      transform: rotate(180deg);
+    }
+    
+    .about-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 300ms ease;
+      font-size: 13px;
+      color: #4b5563;
+      line-height: 1.6;
+    }
+    
+    .about-content.show {
+      max-height: 350px;
+      margin-top: 12px;
+    }
+    
+    .about-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px;
+      background: white;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border: 1px solid #e5e7eb;
+      transition: all 200ms;
+    }
+    
+    .about-item:hover {
+      border-color: #d1d5db;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transform: translateY(-1px);
+    }
+    
+    .about-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .about-icon {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      margin-top: 1px;
+    }
+    
+    .about-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .about-item strong {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6b7280;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    
+    .about-content a {
+      color: #2563eb;
+      text-decoration: none;
+      word-break: break-word;
+      font-weight: 500;
+    }
+    
+    .about-content a:hover {
+      color: #1d4ed8;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
-  <h1>Just The Answer</h1>
+  <div class="header">
+    <svg class="logo" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#0891b2;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#00d9ff;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
+        </linearGradient>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <rect width="128" height="128" fill="url(#grad1)" rx="20"/>
+      <circle cx="20" cy="20" r="8" fill="url(#grad2)" opacity="0.2"/>
+      <circle cx="108" cy="108" r="12" fill="url(#grad2)" opacity="0.15"/>
+      <g transform="translate(64, 64)">
+        <circle cx="0" cy="0" r="38" fill="none" stroke="white" stroke-width="1.5" opacity="0.3"/>
+        <g filter="url(#glow)">
+          <path d="M -8 -14 L 0 -22 L 8 -14" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="-12" y="-6" width="24" height="20" rx="2" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="-8" y1="0" x2="4" y2="0" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+          <line x1="-8" y1="5" x2="8" y2="5" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+          <line x1="-8" y1="10" x2="6" y2="10" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+          <g transform="translate(0, 20)">
+            <path d="M -6 -2 L -6 6 L 6 6 L 6 -2 M -2 -2 L -2 -6 L 4 -6" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+        </g>
+      </g>
+      <rect width="128" height="128" fill="white" opacity="0.08" rx="20" style="pointer-events: none;"/>
+    </svg>
+    <div class="header-title">
+      <h1>Just The Answer</h1>
+      <div class="header-subtitle">Copy AI answers cleanly</div>
+    </div>
+  </div>
   
   <div class="toggle-container">
     <span class="toggle-label">Enable Extension</span>
@@ -89,6 +263,58 @@
   </div>
   
   <div class="status" id="status">Loading...</div>
+  
+  <div class="about-section">
+    <div class="about-toggle" id="aboutToggle">
+      <span>About</span>
+      <span class="about-arrow" id="aboutArrow">▼</span>
+    </div>
+    <div class="about-content" id="aboutContent">
+      <div class="about-item">
+        <svg class="about-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <div class="about-item-content">
+          <strong>Developer</strong>
+          <a href="https://linkedin.com/in/supanroy" target="_blank">Supan Roy</a>
+        </div>
+      </div>
+      
+      <div class="about-item">
+        <svg class="about-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+          <polyline points="22,6 12,13 2,6"></polyline>
+        </svg>
+        <div class="about-item-content">
+          <strong>Contact</strong>
+          <a href="mailto:contact@supanroy.com">contact@supanroy.com</a>
+        </div>
+      </div>
+      
+      <div class="about-item">
+        <svg class="about-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+        </svg>
+        <div class="about-item-content">
+          <strong>Repository</strong>
+          <a href="https://github.com/Supan-Roy/Just-The-Answer" target="_blank">github.com/Supan-Roy/Just-The-Answer</a>
+        </div>
+      </div>
+      
+      <div class="about-item">
+        <svg class="about-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        <div class="about-item-content">
+          <strong>Found an Issue?</strong>
+          <a href="https://github.com/Supan-Roy/Just-The-Answer/issues/new?title=Bug%20Report&body=**Describe%20the%20bug:**%0A%0A**Steps%20to%20reproduce:**%0A%0A**Expected%20behavior:**%0A%0A**Screenshots:**%0A" target="_blank">Report Bug</a>
+        </div>
+      </div>
+    </div>
+  </div>
   
   <script src="popup.js"></script>
 </body>

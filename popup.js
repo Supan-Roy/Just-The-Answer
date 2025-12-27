@@ -1,5 +1,8 @@
 const toggle = document.getElementById('toggle');
 const status = document.getElementById('status');
+const aboutToggle = document.getElementById('aboutToggle');
+const aboutContent = document.getElementById('aboutContent');
+const aboutArrow = document.getElementById('aboutArrow');
 
 // Load current state
 chrome.storage.local.get(['jtaEnabled'], (result) => {
@@ -27,6 +30,18 @@ toggle.addEventListener('click', () => {
       });
     });
   });
+});
+
+// About section toggle
+aboutToggle.addEventListener('click', () => {
+  const isOpen = aboutContent.classList.contains('show');
+  if (isOpen) {
+    aboutContent.classList.remove('show');
+    aboutArrow.classList.remove('open');
+  } else {
+    aboutContent.classList.add('show');
+    aboutArrow.classList.add('open');
+  }
 });
 
 function updateUI(enabled) {
