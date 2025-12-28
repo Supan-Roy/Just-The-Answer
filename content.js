@@ -1090,10 +1090,19 @@ function addFullAnswerCopy(answerDiv) {
 function findAnswerContainers() {
   const containers = new Set();
 
-  // ChatGPT: markdown divs (DO NOT pre-mark)
+  // ChatGPT: markdown divs (assistant messages only). Skip quotes like "You said:" by length/content.
   document.querySelectorAll("div.markdown").forEach(el => {
-    const textLen = el.textContent.trim().length;
-    if (textLen < 100) return;
+    const rawText = (el.textContent || "").trim();
+    if (rawText.length < 120) return; // avoid tiny echoes like "You said:"
+
+    // Require assistant role ancestor; skip user/system
+    const msgRoot = el.closest('[data-message-author-role]');
+    const role = msgRoot?.getAttribute('data-message-author-role');
+    if (role && role !== 'assistant') return;
+
+    // If streaming/in-progress, skip for now (will be reprocessed when done)
+    const status = msgRoot?.getAttribute('data-message-status');
+    if (status && status.toLowerCase() !== 'done') return;
 
     // Skip if we already injected buttons here
     if (el.dataset.jtaEnhanced) return;
@@ -1194,6 +1203,14 @@ function enhanceAnswers() {
     const textLen = answer.textContent?.trim().length || 0;
     if (textLen < 100) return;
 
+    // If the parent message is not assistant/done, do not inject (and do not mark enhanced)
+    const msgRoot = answer.closest('[data-message-author-role]');
+    const role = msgRoot?.getAttribute('data-message-author-role');
+    const status = msgRoot?.getAttribute('data-message-status');
+    if (!msgRoot || (role && role !== 'assistant') || (status && status.toLowerCase() !== 'done')) {
+      return;
+    }
+
     // Full-answer button: inject ONCE when stable (do not block block copy)
     if (!answer.dataset.jtaFullEnhanced && isAssistantMessageStable(answer)) {
       answer.dataset.jtaFullEnhanced = "true";
@@ -1207,6 +1224,13 @@ function enhanceAnswers() {
 }
 
 function isAssistantMessageStable(answerDiv) {
+  const msgRoot = answerDiv.closest('[data-message-author-role]');
+  const role = msgRoot?.getAttribute('data-message-author-role');
+  if (role && role !== 'assistant') return false;
+
+  const status = msgRoot?.getAttribute('data-message-status');
+  if (status && status.toLowerCase() !== 'done') return false;
+
   // Check for streaming indicators
   if (answerDiv.querySelector(".result-streaming, .animate-pulse, [class*='cursor'], [class*='typing']")) {
     return false;
@@ -1229,6 +1253,13 @@ function isAssistantMessageStable(answerDiv) {
 function enhanceAnswer(answer) {
   // Mark as enhanced for initial processing
   if (!answer.dataset.jtaEnhanced) {
+    const msgRoot = answer.closest('[data-message-author-role]');
+    const role = msgRoot?.getAttribute('data-message-author-role');
+    const status = msgRoot?.getAttribute('data-message-status');
+    if (!msgRoot || (role && role !== 'assistant') || (status && status.toLowerCase() !== 'done')) {
+      return;
+    }
+
     // ⛔ Do NOT inject during streaming
     if (!isAssistantMessageStable(answer)) {
       // Retry after a short delay for streaming messages

@@ -16,8 +16,8 @@ A powerful Chrome extension that extracts and copies clean, meaningful answers f
 
 🧮 **Equation Support**
 - Detects KaTeX and MathJax equations
-- Extracts LaTeX code for math-specific tools
-- Preserves equation formatting for Word documents
+- Keeps display equations attached to their preceding context
+- Preserves rich math HTML for Docs/Notion; falls back to LaTeX text for Word
 
 🎯 **Multi-Platform Support**
 - ChatGPT
@@ -52,7 +52,7 @@ A powerful Chrome extension that extracts and copies clean, meaningful answers f
 2. Get an answer
 3. Click the "Copy Main Answer" button (appears at the top of responses)
 4. The answer is copied to your clipboard
-5. Paste directly into Word, Google Docs, or any text editor
+5. Paste directly into Word, Google Docs, or any text editor (Word receives a math-safe text fallback by design)
 
 ### Copy by Block
 1. Hover over any section of the answer
@@ -89,7 +89,8 @@ The extension uses visual cues to identify answer boundaries:
 - Automatically detects KaTeX and MathJax rendering
 - Extracts underlying LaTeX code
 - Supports inline and display equations
-- No garbled accessibility text in Word paste
+- Attaches display equations to their surrounding text blocks for correct ordering
+- Provides a LaTeX text fallback for Word (Word strips KaTeX/MJX HTML)
 
 ### Performance Optimized
 - Lightweight observer system (200ms debounce)
@@ -122,9 +123,9 @@ No user data, analytics, or tracking is collected.
 4. Try disabling and re-enabling the extension
 
 ### Equation showing as garbage text in Word
-1. Use "Copy Equation" button for math content
-2. Paste with "Keep Source Formatting" option
-3. Avoid pasting with "Merge Formatting" in Word
+1. Word intentionally receives a LaTeX text fallback (Word strips KaTeX/MJX HTML)
+2. Use "Copy Equation" for math-only capture; use "Copy Main Answer" to keep placement with surrounding text
+3. If you want rich math formatting, paste into Docs/Notion or a LaTeX-aware editor
 
 ### Extension not working on certain websites
 1. Some AI platforms may have updates that change their HTML structure

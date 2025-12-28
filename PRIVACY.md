@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last Updated:** December 27, 2025
+**Last Updated:** December 28, 2025
 
 ## Overview
 
@@ -119,5 +119,5 @@ That's it. Simple, transparent, and secure.
 
 ---
 
-**Last Updated:** December 27, 2025  
-**Version:** 1.0
+**Last Updated:** December 28, 2025  
+**Version:** 1.1
