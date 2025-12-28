@@ -28,10 +28,17 @@ async function copyToClipboard(html, text) {
       : `<pre>${cleanText.replace(/</g, "&lt;")}</pre>`;
 
     if (window.ClipboardItem) {
-      const clipboardData = {
-        "text/plain": new Blob([cleanText], { type: "text/plain" }),
-        "text/html": new Blob([safeHtml], { type: "text/html" })
-      };
+      // Detect Word/Office (Word strips KaTeX/MathJax HTML anyway)
+      const isWord = /winword|msword|office/i.test(navigator.userAgent);
+      
+      const clipboardData = isWord
+        ? {
+            "text/plain": new Blob([cleanText], { type: "text/plain" })
+          }
+        : {
+            "text/plain": new Blob([cleanText], { type: "text/plain" }),
+            "text/html": new Blob([safeHtml], { type: "text/html" })
+          };
 
       await navigator.clipboard.write([
         new ClipboardItem(clipboardData)
@@ -396,15 +403,7 @@ function extractCleanBlockText(root) {
     if (tableText) lines.push(tableText);
   });
 
-  // 3️⃣ EQUATIONS — DISPLAY ONLY
-  root.querySelectorAll(".katex-display, mjx-container").forEach(eq => {
-    const latex =
-      eq.querySelector("annotation[encoding='application/x-tex']")?.textContent
-      || eq.innerText;
-    if (latex) lines.push(latex.trim());
-  });
-
-  // 4️⃣ LIST ITEMS — prefer LI, avoid double-counting P inside LI
+  // 3️⃣ LIST ITEMS — prefer LI, avoid double-counting P inside LI
   root.querySelectorAll("li").forEach(li => {
     if (li.closest("pre, table, mjx-container, .katex-display")) return;
     const t = li.textContent.replace(/\s+/g, " ").trim();
@@ -500,9 +499,9 @@ function blockToContent(block) {
 
     const clone = el.cloneNode(true);
 
-    // Remove nested headings and UI (but keep aria-hidden content like KaTeX render spans)
+    // Remove nested headings and UI (keep KaTeX/MJX for rendering; only strip pure assistive)
     clone.querySelectorAll(
-      "h1, h2, h3, h4, h5, h6, button, .jta-btn, [data-jta-ui], .katex-mathml, mjx-assistive-mml"
+      "h1, h2, h3, h4, h5, h6, button, .jta-btn, [data-jta-ui], mjx-assistive-mml"
     ).forEach(n => n.remove());
 
     wrapper.appendChild(clone);
@@ -516,6 +515,40 @@ function blockToContent(block) {
 
   // 3️⃣ Extract body text ONCE
   let bodyText = extractCleanBlockText(wrapper);
+
+  const isInlineEquation = (node) => !!node.closest("p, li, blockquote");
+
+  // Ensure equations are represented in text even if rendering hides them
+  const eqNodes = wrapper.querySelectorAll(".katex, .katex-display, mjx-container");
+  eqNodes.forEach(eq => {
+    if (isInlineEquation(eq)) return; // avoid inline math noise
+    const latex =
+      eq.querySelector("annotation[encoding='application/x-tex']")?.textContent ||
+      eq.innerText;
+    const val = (latex || "").trim();
+    if (!val) return;
+    if (!bodyText.includes(val)) {
+      bodyText = bodyText ? bodyText + "\n\n" + val : val;
+    }
+  });
+
+  // Equation fallback text for HTML (Word sometimes ignores KaTeX spans)
+  const eqNodesForHtml = wrapper.querySelectorAll('.katex, .katex-display, mjx-container');
+  let eqFallback = "";
+  eqNodesForHtml.forEach(eq => {
+    if (isInlineEquation(eq)) return; // skip inline math
+    const latex =
+      eq.querySelector("annotation[encoding='application/x-tex']")?.textContent ||
+      eq.innerText;
+    const val = (latex || "").trim();
+    // Only add fallback if HTML doesn't already have this equation AND the LaTeX isn't already in HTML
+    if (val && !html.includes(".katex") && !html.includes(val)) {
+      eqFallback = eqFallback ? eqFallback + "\n" + val : val;
+    }
+  });
+  if (eqFallback) {
+    html += `<p>${eqFallback}</p>`;
+  }
 
   // 🔥 CRITICAL: Remove heading from body if it appears there
   if (heading && bodyText) {
@@ -810,8 +843,40 @@ function extractFullAnswer(answerDiv) {
   let textParts = [];
   let htmlParts = [];
 
+  const isEquationBlock = (block) => {
+    if (!Array.isArray(block) || block.length !== 1) return false;
+    const el = block[0];
+    return el?.matches?.('.katex, .katex-display, mjx-container');
+  };
+
   // Reuse the SAME deduplication logic as block copy
   contentBlocks.forEach(block => {
+    if (isEquationBlock(block)) {
+      const eqEl = block[0];
+      const latex =
+        eqEl.querySelector("annotation[encoding='application/x-tex']")?.textContent ||
+        eqEl.innerText;
+
+      const val = (latex || "").trim();
+      if (!val) return;
+
+      // 🔥 Attach equation to PREVIOUS block instead of standalone
+      if (textParts.length > 0) {
+        textParts[textParts.length - 1] += "\n\n" + val;
+      } else {
+        textParts.push(val);
+      }
+
+      if (htmlParts.length > 0) {
+        const clone = eqEl.cloneNode(true);
+        clone.querySelectorAll("button, .jta-btn, [data-jta-ui]").forEach(n => n.remove());
+        const fallback = val ? `<p>${val}</p>` : "";
+        htmlParts[htmlParts.length - 1] += "\n" + clone.outerHTML + fallback;
+      }
+
+      return;
+    }
+
     const { html, text } = blockToContent(block);
 
     if (text && text.trim().length > 0) {
