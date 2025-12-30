@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Just The Answer – Copy AI Responses Cleanly",
   "short_name": "Just The Answer",
-  "version": "1.0.1",
+  "version": "1.2",
   "description": "Copy only the meaningful answer from AI responses. Clean and formatted for general pasting and using in Word and Google Docs",
   "author": "Supan Roy",
   "homepage_url": "https://github.com/Supan-Roy/Just-The-Answer",
