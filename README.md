@@ -33,7 +33,7 @@ A powerful Chrome extension that extracts and copies clean, meaningful answers f
 ## Installation
 
 ### From Chrome Web Store
-1. Visit [Chrome Web Store]([https://chrome.google.com/webstore](https://chromewebstore.google.com/detail/gnfmkpjejlmnohabakglhkfbailhabea?utm_source=item-share-cb))
+1. Get it Now: https://chromewebstore.google.com/detail/gnfmkpjejlmnohabakglhkfbailhabea?utm_source=item-share-cb
 2. Click "Add to Chrome"
 3. Confirm the permissions
 
