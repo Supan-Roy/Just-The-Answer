@@ -33,10 +33,9 @@ A powerful Chrome extension that extracts and copies clean, meaningful answers f
 ## Installation
 
 ### From Chrome Web Store
-1. Visit [Chrome Web Store](https://chrome.google.com/webstore)
-2. Search for "Just The Answer"
-3. Click "Add to Chrome"
-4. Confirm the permissions
+1. Visit [Chrome Web Store]([https://chrome.google.com/webstore](https://chromewebstore.google.com/detail/gnfmkpjejlmnohabakglhkfbailhabea?utm_source=item-share-cb))
+2. Click "Add to Chrome"
+3. Confirm the permissions
 
 ### Manual Installation (Developer Mode)
 1. Clone or download this repository
