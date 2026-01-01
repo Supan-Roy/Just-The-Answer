@@ -389,6 +389,13 @@ function extractCleanBlockText(root) {
     }
   });
 
+  // 🔥 Copilot: Remove UI buttons and actions that aren't part of content
+  root.querySelectorAll("button, [aria-label*='copy' i], [data-testid*='action' i], [class*='action' i]").forEach(btn => {
+    if (!btn.closest(".jta-btn")) {
+      btn.remove();
+    }
+  });
+
   // 1️⃣ CODE BLOCKS — PRE ONLY (never code separately)
   root.querySelectorAll("pre").forEach(pre => {
     if (pre.closest(".jta-btn")) return;
@@ -413,6 +420,7 @@ function extractCleanBlockText(root) {
   // 5️⃣ NORMAL TEXT — H/P/BLOCKQUOTE but skip those within LI
   root.querySelectorAll("h1,h2,h3,h4,h5,h6,p,blockquote").forEach(el => {
     if (el.closest("pre, table, mjx-container, .katex-display, li")) return;
+    // Include ALL headings in text extraction (Gemini has multiple headings per block)
     const text = el.textContent.replace(/\s+/g, " ").trim();
     if (text) lines.push(text);
   });
@@ -499,9 +507,9 @@ function blockToContent(block) {
 
     const clone = el.cloneNode(true);
 
-    // Remove nested headings and UI (keep KaTeX/MJX for rendering; only strip pure assistive)
+    // Remove UI elements but KEEP nested headings (Gemini has multiple headings per block)
     clone.querySelectorAll(
-      "h1, h2, h3, h4, h5, h6, button, .jta-btn, [data-jta-ui], mjx-assistive-mml"
+      "button, .jta-btn, [data-jta-ui], mjx-assistive-mml"
     ).forEach(n => n.remove());
 
     wrapper.appendChild(clone);
@@ -550,8 +558,9 @@ function blockToContent(block) {
     html += `<p>${eqFallback}</p>`;
   }
 
-  // 🔥 CRITICAL: Remove heading from body if it appears there
-  if (heading && bodyText) {
+  // 🔥 CRITICAL: Remove ONLY the first heading from body if it's at the start (ChatGPT-style)
+  // For Gemini, keep all headings since they're part of content flow
+  if (heading && bodyText && bodyText.trim().startsWith(heading)) {
     const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const re = new RegExp(`^${escaped}\\s*`, "i");
     bodyText = bodyText.replace(re, "").trim();
@@ -730,6 +739,9 @@ function stripGreetingPrefix(text) {
   t = t.replace(/\r\n/g, "\n");
 
   const greetingRegexes = [
+    // Copilot user echo: "Last Thursday You said: ..."
+    /^(last\s+\w+\s+)?you\s+said\s*:?[^\n]*\n+/i,
+
     // Hey Roy 👋
     /^hey\b[^\n]*\n+/i,
     /^hi\b[^\n]*\n+/i,
@@ -764,6 +776,8 @@ function stripClosingSuffix(text) {
   t = t.replace(/\r\n/g, "\n");
 
   const closingRegexes = [
+    /\n+edit\s+in\s+a\s+page\s*$/i,
+    /\n+copilot\s+said\s*:?\s*$/i,
     /\n+(hope this helps)[^.\n]*[.!]?$/i,
     /\n+(let me know[^\n]*|feel free to ask[^\n]*|if you have (any|other) questions[^\n]*)[.!]?$/i,
     /\n+(in summary|to summarize|tl;dr|conclusion)[^\n]*[.!]?$/i,
@@ -1051,8 +1065,43 @@ function addFullAnswerCopy(answerDiv) {
 
   btn.onclick = () => {
     const { html, text } = extractFullAnswer(answerDiv);
-    const cleanedText = stripClosingSuffix(stripGreetingPrefix(text));
-    const cleanedHtml = sanitizeHtmlGreetingsClosings(html);
+    
+    // Copilot-specific: aggressively clean UI noise
+    let cleanedText = stripClosingSuffix(stripGreetingPrefix(text));
+    let cleanedHtml = sanitizeHtmlGreetingsClosings(html);
+    
+    // Remove Copilot UI artifacts from text
+    cleanedText = cleanedText
+      .replace(/^(last\s+\w+\s+)?you\s+said\s*:?[^\n]*/mi, '')
+      .replace(/copilot\s+said\s*:?/gi, '')
+      .replace(/edit\s+in\s+a\s+page/gi, '')
+      .replace(/copy\s*$/i, '')
+      .trim();
+    
+    // Validate we have content before copying
+    if (!cleanedText?.trim() && !cleanedHtml?.trim()) {
+      // Fallback: try direct text extraction
+      const fallbackText = answerDiv.textContent?.trim() || "";
+      if (fallbackText && fallbackText.length > 50) {
+        const cleaned = fallbackText
+          .replace(/^(last\s+\w+\s+)?you\s+said\s*:?[^\n]*/mi, '')
+          .replace(/copilot\s+said\s*:?/gi, '')
+          .replace(/edit\s+in\s+a\s+page/gi, '')
+          .replace(/copy\s*$/i, '')
+          .trim();
+        copyToClipboard("", cleaned).then(ok => {
+          if (ok) {
+            jtaMarkCopied(btn, jtaAnswerIconSVG(), "Copy Main Answer");
+          } else {
+            jtaToast("Copy failed", true);
+          }
+        });
+      } else {
+        jtaToast("No content to copy", true);
+      }
+      return;
+    }
+    
     copyToClipboard(cleanedHtml, cleanedText).then(ok => {
       if (ok) {
         jtaMarkCopied(btn, jtaAnswerIconSVG(), "Copy Main Answer");
@@ -1127,6 +1176,8 @@ function findAnswerContainers() {
     let candidates = allDivs.filter(el => {
       const t = (el.textContent || "").trim();
       if (t.length < 120) return false;
+      // Skip if contains "You said:" (user echo)
+      if (/you\s+said\s*:?/i.test(t.substring(0, 100))) return false;
       // Skip inputs/prompt/user areas
       if (el.closest("textarea, input, form, [contenteditable='true'], [role='textbox'], [data-testid*='prompt' i], [data-testid*='composer' i], [data-testid*='user' i], [data-role*='input' i]")) return false;
       const cls = (el.className || "").toString().toLowerCase();
@@ -1203,12 +1254,15 @@ function enhanceAnswers() {
     const textLen = answer.textContent?.trim().length || 0;
     if (textLen < 100) return;
 
-    // If the parent message is not assistant/done, do not inject (and do not mark enhanced)
+    // ChatGPT-specific gating: only apply to ChatGPT containers
     const msgRoot = answer.closest('[data-message-author-role]');
-    const role = msgRoot?.getAttribute('data-message-author-role');
-    const status = msgRoot?.getAttribute('data-message-status');
-    if (!msgRoot || (role && role !== 'assistant') || (status && status.toLowerCase() !== 'done')) {
-      return;
+    if (msgRoot) {
+      // Has ChatGPT attributes → apply ChatGPT-specific rules
+      const role = msgRoot.getAttribute('data-message-author-role');
+      const status = msgRoot.getAttribute('data-message-status');
+      if ((role && role !== 'assistant') || (status && status.toLowerCase() !== 'done')) {
+        return;
+      }
     }
 
     // Full-answer button: inject ONCE when stable (do not block block copy)
@@ -1224,19 +1278,22 @@ function enhanceAnswers() {
 }
 
 function isAssistantMessageStable(answerDiv) {
+  // ChatGPT-specific checks
   const msgRoot = answerDiv.closest('[data-message-author-role]');
-  const role = msgRoot?.getAttribute('data-message-author-role');
-  if (role && role !== 'assistant') return false;
+  if (msgRoot) {
+    const role = msgRoot.getAttribute('data-message-author-role');
+    if (role && role !== 'assistant') return false;
 
-  const status = msgRoot?.getAttribute('data-message-status');
-  if (status && status.toLowerCase() !== 'done') return false;
+    const status = msgRoot.getAttribute('data-message-status');
+    if (status && status.toLowerCase() !== 'done') return false;
+  }
 
   // Check for streaming indicators
   if (answerDiv.querySelector(".result-streaming, .animate-pulse, [class*='cursor'], [class*='typing']")) {
     return false;
   }
 
-  // Check parent container for streaming state
+  // Check parent container for streaming state (ChatGPT-specific)
   const messageRoot = answerDiv.closest("[data-message-author-role='assistant']");
   if (messageRoot) {
     // If parent has streaming class, not stable yet
@@ -1253,11 +1310,15 @@ function isAssistantMessageStable(answerDiv) {
 function enhanceAnswer(answer) {
   // Mark as enhanced for initial processing
   if (!answer.dataset.jtaEnhanced) {
+    // ChatGPT-specific gating: only apply to ChatGPT containers
     const msgRoot = answer.closest('[data-message-author-role]');
-    const role = msgRoot?.getAttribute('data-message-author-role');
-    const status = msgRoot?.getAttribute('data-message-status');
-    if (!msgRoot || (role && role !== 'assistant') || (status && status.toLowerCase() !== 'done')) {
-      return;
+    if (msgRoot) {
+      // Has ChatGPT attributes → apply ChatGPT-specific rules
+      const role = msgRoot.getAttribute('data-message-author-role');
+      const status = msgRoot.getAttribute('data-message-status');
+      if ((role && role !== 'assistant') || (status && status.toLowerCase() !== 'done')) {
+        return;
+      }
     }
 
     // ⛔ Do NOT inject during streaming
