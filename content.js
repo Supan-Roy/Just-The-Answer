@@ -1204,6 +1204,13 @@ function findAnswerContainers() {
     // Skip if we already injected buttons here
     if (el.dataset.jtaEnhanced) return;
 
+    // Skip if a parent markdown div already selected (avoid nested duplicates)
+    const parentMarkdown = el.parentElement?.closest("div.markdown");
+    if (parentMarkdown && !parentMarkdown.dataset.jtaEnhanced) {
+      // Parent will handle it, skip this nested div
+      return;
+    }
+
     containers.add(el);
   });
 
