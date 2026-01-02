@@ -390,39 +390,81 @@ function extractCleanBlockText(root) {
   });
 
   // 🔥 Copilot: Remove UI buttons and actions that aren't part of content
-  root.querySelectorAll("button, [aria-label*='copy' i], [data-testid*='action' i], [class*='action' i]").forEach(btn => {
-    if (!btn.closest(".jta-btn")) {
-      btn.remove();
+  root.querySelectorAll("button, .jta-btn, [data-jta-ui], [aria-label*='copy' i], [data-testid*='action' i], [class*='action' i]").forEach(btn => {
+    btn.remove();
+  });
+
+  // Extract elements in DOM order to preserve sequence
+  const allElements = Array.from(root.querySelectorAll("pre, table, .katex-display, mjx-container, li, h1, h2, h3, h4, h5, h6, p, blockquote"));
+  
+  // Filter out elements that are inside buttons or our UI
+  const contentElements = allElements.filter(el => {
+    if (el.closest("button, .jta-btn, .jta-copy-btn, .jta-copy-full-btn, [data-jta], [data-jta-ui]")) {
+      return false;
     }
+    return true;
+  });
+  
+  // Filter to outermost elements only (avoid duplicates from nested structures)
+  const seen = new Set();
+  const outermost = contentElements.filter(el => {
+    // Skip if already processed as parent
+    if (seen.has(el)) return false;
+    
+    // Skip if nested inside another element we're processing
+    let parent = el.parentElement;
+    while (parent && parent !== root) {
+      if (contentElements.includes(parent)) return false;
+      parent = parent.parentElement;
+    }
+    
+    seen.add(el);
+    return true;
   });
 
-  // 1️⃣ CODE BLOCKS — PRE ONLY (never code separately)
-  root.querySelectorAll("pre").forEach(pre => {
-    if (pre.closest(".jta-btn")) return;
-    const code = pre.innerText.trim();
-    if (code) lines.push(code);
-  });
-
-  // 2️⃣ TABLES — ONCE ONLY
-  root.querySelectorAll("table").forEach(table => {
-    if (table.closest(".jta-btn")) return;
-    const tableText = table.innerText.replace(/\s+\n/g, "\n").trim();
-    if (tableText) lines.push(tableText);
-  });
-
-  // 3️⃣ LIST ITEMS — prefer LI, avoid double-counting P inside LI
-  root.querySelectorAll("li").forEach(li => {
-    if (li.closest("pre, table, mjx-container, .katex-display")) return;
-    const t = li.textContent.replace(/\s+/g, " ").trim();
-    if (t) lines.push(t);
-  });
-
-  // 5️⃣ NORMAL TEXT — H/P/BLOCKQUOTE but skip those within LI
-  root.querySelectorAll("h1,h2,h3,h4,h5,h6,p,blockquote").forEach(el => {
-    if (el.closest("pre, table, mjx-container, .katex-display, li")) return;
-    // Include ALL headings in text extraction (Gemini has multiple headings per block)
-    const text = el.textContent.replace(/\s+/g, " ").trim();
-    if (text) lines.push(text);
+  // Process in DOM order
+  outermost.forEach(el => {
+    const tag = el.tagName.toLowerCase();
+    
+    // Skip if inside a container we already processed
+    if (el.closest("pre, table, li")) {
+      const container = el.closest("pre, table, li");
+      if (container !== el && outermost.includes(container)) return;
+    }
+    
+    // Code blocks
+    if (tag === 'pre') {
+      const code = el.innerText.trim();
+      if (code) lines.push(code);
+      return;
+    }
+    
+    // Tables
+    if (tag === 'table') {
+      const tableText = el.innerText.replace(/\s+\n/g, "\n").trim();
+      if (tableText) lines.push(tableText);
+      return;
+    }
+    
+    // Display equations (skip inline)
+    if (el.classList.contains('katex-display') || el.tagName === 'MJX-CONTAINER') {
+      const isInline = !!el.closest("p, li, blockquote");
+      if (!isInline) return; // equations handled separately
+    }
+    
+    // List items
+    if (tag === 'li') {
+      const t = el.textContent.replace(/\s+/g, " ").trim();
+      if (t) lines.push(t);
+      return;
+    }
+    
+    // Headings and paragraphs
+    if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'blockquote'].includes(tag)) {
+      const text = el.textContent.replace(/\s+/g, " ").trim();
+      if (text) lines.push(text);
+      return;
+    }
   });
 
   return lines.join("\n\n");
@@ -507,9 +549,9 @@ function blockToContent(block) {
 
     const clone = el.cloneNode(true);
 
-    // Remove UI elements but KEEP nested headings (Gemini has multiple headings per block)
+    // Remove UI elements including our buttons BEFORE extracting text
     clone.querySelectorAll(
-      "button, .jta-btn, [data-jta-ui], mjx-assistive-mml"
+      "button, .jta-btn, .jta-copy-btn, .jta-copy-full-btn, [data-jta], [data-jta-ui], mjx-assistive-mml"
     ).forEach(n => n.remove());
 
     wrapper.appendChild(clone);
@@ -776,6 +818,7 @@ function stripClosingSuffix(text) {
   t = t.replace(/\r\n/g, "\n");
 
   const closingRegexes = [
+    /\n+copy\s+main\s+answer\s*$/i,
     /\n+edit\s+in\s+a\s+page\s*$/i,
     /\n+copilot\s+said\s*:?\s*$/i,
     /\n+(hope this helps)[^.\n]*[.!]?$/i,
@@ -805,6 +848,11 @@ function sanitizeHtmlGreetingsClosings(html) {
   if (!html) return html;
   const container = document.createElement("div");
   container.innerHTML = html;
+
+  // Remove all injected buttons before processing
+  container.querySelectorAll("button, .jta-btn, .jta-copy-btn, .jta-copy-full-btn, [data-jta], [data-jta-ui]").forEach(btn => {
+    btn.remove();
+  });
 
   // Remove leading greetings in first few semantic elements
   const greetPatterns = [
